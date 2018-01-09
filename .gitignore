@@ -1,0 +1,15 @@
+# remove ide stuff
+*.iml
+/.idea/*
+
+# remove gradle stuff
+.gradle
+/local.properties
+
+# build artifacts
+/build
+/captures
+.externalNativeBuild
+
+# apple junk
+.DS_Store
