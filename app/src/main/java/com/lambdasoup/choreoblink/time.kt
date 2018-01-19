@@ -73,7 +73,7 @@ class TimeSyncView @JvmOverloads constructor(context: Context,
 
 class TimeSource(context: Context) {
 
-    val state = TimeSyncLiveData(context)
+    val state: LiveData<TimeSyncState> = TimeSyncLiveData(context)
 
 }
 

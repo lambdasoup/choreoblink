@@ -50,11 +50,11 @@ class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
 
 }
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+class MainViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val torchManager = TorchManager(application)
-    private val choreoRepository = ChoreoRepository()
-    private val timeSource = TimeSource(application)
+    private val torchManager = app.getService(TorchManager::class.java)
+    private val choreoRepository = app.getService(ChoreoRepository::class.java)
+    private val timeSource = app.getService(TimeSource::class.java)
 
     val choreo = choreoRepository.choreos
     val device = Transformations.map(torchManager.devices, List<Device>::firstOrNull)!!
