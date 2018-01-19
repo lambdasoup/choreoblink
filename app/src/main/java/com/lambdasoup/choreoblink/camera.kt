@@ -1,10 +1,7 @@
 package com.lambdasoup.choreoblink
 
-import android.app.Application
-import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
-import android.arch.lifecycle.Transformations
 import android.content.Context
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraManager
@@ -13,14 +10,6 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.TextView
 import java.util.concurrent.ScheduledThreadPoolExecutor
-
-class CameraViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val repository = CameraRepository(application)
-
-    val device = Transformations.map(repository.devices, List<Device>::firstOrNull)
-
-}
 
 class CameraRepository(context: Context) {
 

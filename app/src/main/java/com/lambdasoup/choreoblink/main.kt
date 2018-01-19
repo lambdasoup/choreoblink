@@ -1,6 +1,10 @@
 package com.lambdasoup.choreoblink
 
 import android.Manifest
+import android.app.Application
+import android.arch.lifecycle.AndroidViewModel
+import android.arch.lifecycle.LiveData
+import android.arch.lifecycle.Transformations
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.os.Bundle
@@ -11,13 +15,10 @@ import android.view.WindowManager
 class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
 
     private lateinit var timeSyncView: TimeSyncView
-    private lateinit var timeSyncViewModel: TimeSyncViewModel
-
     private lateinit var cameraView: CameraView
-    private lateinit var cameraViewModel: CameraViewModel
-
     private lateinit var choreoView: ChoreoView
-    private lateinit var choreoViewModel: ChoreoViewModel
+
+    private lateinit var viewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,23 +26,15 @@ class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
         setContentView(R.layout.activity_main)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        // bind time stuff
         timeSyncView = findViewById(R.id.time_sync)
-        timeSyncView.listener = this
-        timeSyncViewModel = ViewModelProviders.of(this)
-                .get(TimeSyncViewModel::class.java)
-        timeSyncViewModel.state.observe(this, timeSyncView)
-
-        // bind camera stuff
         cameraView = findViewById(R.id.camera)
-        cameraViewModel = ViewModelProviders.of(this)
-                .get(CameraViewModel::class.java)
-        cameraViewModel.device.observe(this, cameraView)
-
-        // bind choreo stuff
         choreoView = findViewById(R.id.choreos)
-        choreoViewModel = ViewModelProviders.of(this).get(ChoreoViewModel::class.java)
-        choreoViewModel.choreos.observe(this, choreoView)
+
+        viewModel = ViewModelProviders.of(this)
+                .get(MainViewModel::class.java)
+        viewModel.state.observe(this, timeSyncView)
+        viewModel.choreos.observe(this, choreoView)
+        viewModel.device.observe(this, cameraView)
     }
 
     override fun onResume() {
@@ -54,6 +47,18 @@ class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
     override fun requestPermission(permission: String) {
         requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 0)
     }
+
+}
+
+class MainViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val cameraRepository = CameraRepository(application)
+    private val choreoRepository = ChoreoRepository()
+    private val gpsRepository = GpsRepository(application)
+
+    val choreos = choreoRepository.choreos
+    val device = Transformations.map(cameraRepository.devices, List<Device>::firstOrNull)!!
+    val state: LiveData<TimeSyncState> = gpsRepository.state
 
 }
 

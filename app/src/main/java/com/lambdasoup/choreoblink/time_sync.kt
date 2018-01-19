@@ -1,8 +1,6 @@
 package com.lambdasoup.choreoblink
 
 import android.Manifest
-import android.app.Application
-import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.Observer
 import android.content.BroadcastReceiver
@@ -71,14 +69,6 @@ class TimeSyncView @JvmOverloads constructor(context: Context,
     interface Listener {
         fun requestPermission(permission: String)
     }
-}
-
-class TimeSyncViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val repository = GpsRepository(application)
-
-    val state: LiveData<TimeSyncState> = repository.state
-
 }
 
 class GpsRepository(context: Context) {
