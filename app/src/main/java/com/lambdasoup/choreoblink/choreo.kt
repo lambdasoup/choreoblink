@@ -58,7 +58,7 @@ class ChoreoView @JvmOverloads constructor(context: Context,
     }
 
     init {
-        LayoutInflater.from(context).inflate(R.layout.card_choreos, this)
+        LayoutInflater.from(context).inflate(R.layout.card_choreo, this)
         val list: RecyclerView = findViewById(R.id.list)
         list.adapter = adapter
     }

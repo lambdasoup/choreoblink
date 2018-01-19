@@ -36,7 +36,7 @@ class TimeSyncView @JvmOverloads constructor(context: Context,
     var listener: Listener? = null
 
     init {
-        LayoutInflater.from(context).inflate(R.layout.card_timesync, this)
+        LayoutInflater.from(context).inflate(R.layout.card_time, this)
         button = findViewById(R.id.button)
         progress = findViewById(R.id.progress)
         text = findViewById(R.id.text)
@@ -71,7 +71,7 @@ class TimeSyncView @JvmOverloads constructor(context: Context,
     }
 }
 
-class GpsRepository(context: Context) {
+class TimeSource(context: Context) {
 
     val state = TimeSyncLiveData(context)
 

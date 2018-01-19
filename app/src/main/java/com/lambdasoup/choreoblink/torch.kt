@@ -11,7 +11,7 @@ import android.view.LayoutInflater
 import android.widget.TextView
 import java.util.concurrent.ScheduledThreadPoolExecutor
 
-class CameraRepository(context: Context) {
+class TorchManager(context: Context) {
 
     private val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
@@ -55,7 +55,7 @@ class CameraView @JvmOverloads constructor(context: Context,
     private val delay: TextView
 
     init {
-        LayoutInflater.from(context).inflate(R.layout.card_camera, this)
+        LayoutInflater.from(context).inflate(R.layout.card_torch, this)
         delay = findViewById(R.id.delay)
     }
 

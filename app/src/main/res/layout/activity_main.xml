@@ -7,19 +7,19 @@
     tools:context=".MainActivity">
 
     <com.lambdasoup.choreoblink.CameraView
-        android:id="@+id/camera"
+        android:id="@+id/torch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp" />
 
     <com.lambdasoup.choreoblink.TimeSyncView
-        android:id="@+id/time_sync"
+        android:id="@+id/time"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp" />
 
     <com.lambdasoup.choreoblink.ChoreoView
-        android:id="@+id/choreos"
+        android:id="@+id/choreo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp" />

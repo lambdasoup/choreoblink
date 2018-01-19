@@ -14,8 +14,8 @@ import android.view.WindowManager
 
 class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
 
-    private lateinit var timeSyncView: TimeSyncView
-    private lateinit var cameraView: CameraView
+    private lateinit var timeView: TimeSyncView
+    private lateinit var torchView: CameraView
     private lateinit var choreoView: ChoreoView
 
     private lateinit var viewModel: MainViewModel
@@ -26,15 +26,15 @@ class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
         setContentView(R.layout.activity_main)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        timeSyncView = findViewById(R.id.time_sync)
-        cameraView = findViewById(R.id.camera)
-        choreoView = findViewById(R.id.choreos)
+        timeView = findViewById(R.id.time)
+        torchView = findViewById(R.id.torch)
+        choreoView = findViewById(R.id.choreo)
 
         viewModel = ViewModelProviders.of(this)
                 .get(MainViewModel::class.java)
-        viewModel.state.observe(this, timeSyncView)
-        viewModel.choreos.observe(this, choreoView)
-        viewModel.device.observe(this, cameraView)
+        viewModel.time.observe(this, timeView)
+        viewModel.choreo.observe(this, choreoView)
+        viewModel.device.observe(this, torchView)
     }
 
     override fun onResume() {
@@ -52,18 +52,18 @@ class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val cameraRepository = CameraRepository(application)
+    private val torchManager = TorchManager(application)
     private val choreoRepository = ChoreoRepository()
-    private val gpsRepository = GpsRepository(application)
+    private val timeSource = TimeSource(application)
 
-    val choreos = choreoRepository.choreos
-    val device = Transformations.map(cameraRepository.devices, List<Device>::firstOrNull)!!
-    val state: LiveData<TimeSyncState> = gpsRepository.state
+    val choreo = choreoRepository.choreos
+    val device = Transformations.map(torchManager.devices, List<Device>::firstOrNull)!!
+    val time: LiveData<TimeSyncState> = timeSource.state
 
     init {
-        state.observeForever { timeSyncState ->
+        time.observeForever { timeSyncState ->
             if (timeSyncState is TimeSyncState.Synced) {
-                cameraRepository.updateTimeDelta(timeSyncState.delta)
+                torchManager.updateTimeDelta(timeSyncState.delta)
             }
         }
     }
