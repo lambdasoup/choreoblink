@@ -4,11 +4,18 @@ import android.Manifest
 import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.os.Bundle
+import android.support.v4.content.LocalBroadcastManager
+import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.CardView
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -17,6 +24,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import java.util.*
 
+private const val PERMISSION: String = Manifest.permission.ACCESS_FINE_LOCATION
 
 class TimeSyncView @JvmOverloads constructor(context: Context,
                                              attrs: AttributeSet? = null,
@@ -36,15 +44,17 @@ class TimeSyncView @JvmOverloads constructor(context: Context,
         text = findViewById(R.id.text)
     }
 
-    override fun onChanged(state: TimeSyncState?) {
-        when (state) {
-            is TimeSyncState.NeedsPermission -> {
+    override fun onChanged(nullableState: TimeSyncState?) {
+        val state = requireNotNull(nullableState)
+
+        return when (state) {
+            TimeSyncState.NeedsPermission -> {
                 progress.visibility = INVISIBLE
                 text.visibility = INVISIBLE
                 button.visibility = VISIBLE
-                button.setOnClickListener { listener?.requestPermission(state.permission) }
+                button.setOnClickListener { listener?.requestPermission(PERMISSION) }
             }
-            is TimeSyncState.Syncing -> {
+            TimeSyncState.Syncing, TimeSyncState.Idle -> {
                 button.visibility = INVISIBLE
                 progress.visibility = VISIBLE
                 text.visibility = INVISIBLE
@@ -69,38 +79,77 @@ class TimeSyncViewModel(application: Application) : AndroidViewModel(application
 
     val state: LiveData<TimeSyncState> = repository.state
 
-    fun update(location: Location? = null) = repository.update(location)
+}
+
+class GpsRepository(context: Context) {
+
+    val state = TimeSyncLiveData(context)
 
 }
 
-class GpsRepository(private val context: Context) {
+class TimeSyncLiveData(private val context: Context) : LiveData<TimeSyncState>() {
+
+    init {
+        value = TimeSyncState.Idle
+    }
 
     private var delta: Long = 0
 
-    val state = MutableLiveData<TimeSyncState>()
+    private val locationManager: LocationManager =
+            context.getSystemService(AppCompatActivity.LOCATION_SERVICE) as LocationManager
 
-    fun update(location: Location?) {
-        if (location != null) {
-            delta = System.currentTimeMillis() - location.time
-            state.postValue(TimeSyncState.Synced(delta))
+    private val receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            update()
+        }
+    }
+
+    private val listener = object : LocationListener {
+        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+        override fun onProviderEnabled(provider: String?) {}
+        override fun onProviderDisabled(provider: String?) {}
+        override fun onLocationChanged(location: Location?) {
+            if (location != null) {
+                delta = System.currentTimeMillis() - location.time
+                postValue(TimeSyncState.Synced(delta))
+                return
+            }
+        }
+    }
+
+    private fun update() {
+        if (context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            postValue(TimeSyncState.NeedsPermission)
             return
         }
 
-        if (context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            state.postValue(TimeSyncState.Syncing)
-        } else {
-            state.postValue(TimeSyncState.NeedsPermission)
+        if (value == TimeSyncState.Idle) {
+            postValue(TimeSyncState.Syncing)
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0f, listener)
         }
+    }
 
+    override fun onActive() {
+        super.onActive()
+
+        LocalBroadcastManager.getInstance(context).registerReceiver(receiver,
+                IntentFilter("${context.packageName}.CHECK_PERMISSIONS"))
+
+        update()
+    }
+
+    override fun onInactive() {
+        LocalBroadcastManager.getInstance(context).unregisterReceiver(receiver)
+        locationManager.removeUpdates(listener)
+        postValue(TimeSyncState.Idle)
+        super.onInactive()
     }
 
 }
 
 sealed class TimeSyncState {
-    object NeedsPermission : TimeSyncState() {
-        val permission: String = Manifest.permission.ACCESS_FINE_LOCATION
-    }
-
+    object NeedsPermission : TimeSyncState()
+    object Idle : TimeSyncState()
     object Syncing : TimeSyncState()
     data class Synced(val delta: Long) : TimeSyncState()
 }
