@@ -12,18 +12,9 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.WindowManager
-import android.widget.Switch
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledThreadPoolExecutor
-
-private val TAG = MainActivity::class.java.name
-private val CHOREO = booleanArrayOf(true, false, true, false, true, false, true, false, true, false)
 
 class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
-
-    private var executor: ScheduledExecutorService? = null
 
     private lateinit var timeSyncView: TimeSyncView
     private lateinit var timeSyncViewModel: TimeSyncViewModel
@@ -32,23 +23,8 @@ class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
     private lateinit var cameraView: CameraView
     private lateinit var cameraViewModel: CameraViewModel
 
-    private var showChoreo = false
-
-    private var toggle: Switch? = null
-
-    private fun choreo(t: Int) {
-        if (!showChoreo) {
-            return
-        }
-
-        val on = CHOREO[t]
-        Log.d(TAG, "on: " + on.toString() + "   t: " + t)
-//        if (on) {
-//            torch.on()
-//        } else {
-//            torch.off()
-//        }
-    }
+    private lateinit var choreoView: ChoreoView
+    private lateinit var choreoViewModel: ChoreoViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,37 +47,17 @@ class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
                 .get(CameraViewModel::class.java)
         cameraViewModel.device.observe(this, cameraView)
 
-//        toggle = findViewById(R.id.toggle)
-//        toggle!!.setOnCheckedChangeListener { buttonView, isChecked ->
-//            if (!isChecked) {
-//                torch.off()
-//            }
-//
-//            showChoreo = isChecked
-//        }
-
-
+        // bind choreo stuff
+        choreoView = findViewById(R.id.choreos)
+        choreoViewModel = ViewModelProviders.of(this).get(ChoreoViewModel::class.java)
+        choreoViewModel.choreos.observe(this, choreoView)
     }
 
     override fun onResume() {
         super.onResume()
 
         timeSyncViewModel.update()
-
-        executor = ScheduledThreadPoolExecutor(1)
-//        executor!!.scheduleAtFixedRate(updateTime, 0, 10, TimeUnit.MILLISECONDS)
     }
-
-    override fun onPause() {
-
-        executor!!.shutdown()
-
-//        torch.off()
-
-        super.onPause()
-    }
-
-
 
     override fun requestPermission(permission: String) {
         requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 0)
