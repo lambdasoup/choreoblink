@@ -83,8 +83,6 @@ class TimeSyncLiveData(private val context: Context) : LiveData<TimeSyncState>()
         value = TimeSyncState.Idle
     }
 
-    private var delta: Long = 0
-
     private val locationManager: LocationManager =
             context.getSystemService(AppCompatActivity.LOCATION_SERVICE) as LocationManager
 
@@ -100,7 +98,7 @@ class TimeSyncLiveData(private val context: Context) : LiveData<TimeSyncState>()
         override fun onProviderDisabled(provider: String?) {}
         override fun onLocationChanged(location: Location?) {
             if (location != null) {
-                delta = System.currentTimeMillis() - location.time
+                val delta = System.currentTimeMillis() - location.time
                 postValue(TimeSyncState.Synced(delta))
                 return
             }

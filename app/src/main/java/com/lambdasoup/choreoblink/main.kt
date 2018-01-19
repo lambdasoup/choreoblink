@@ -60,5 +60,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val device = Transformations.map(cameraRepository.devices, List<Device>::firstOrNull)!!
     val state: LiveData<TimeSyncState> = gpsRepository.state
 
+    init {
+        state.observeForever { timeSyncState ->
+            if (timeSyncState is TimeSyncState.Synced) {
+                cameraRepository.updateTimeDelta(timeSyncState.delta)
+            }
+        }
+    }
+
 }
 

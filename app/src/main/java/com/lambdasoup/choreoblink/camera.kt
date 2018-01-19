@@ -17,6 +17,8 @@ class CameraRepository(context: Context) {
 
     val devices = MutableLiveData<List<Device>>()
 
+    private var delta = 0L
+
     init {
         try {
             val ids = manager.cameraIdList
@@ -27,6 +29,10 @@ class CameraRepository(context: Context) {
         } catch (e: CameraAccessException) {
             throw RuntimeException(e)
         }
+    }
+
+    fun updateTimeDelta(delta: Long) {
+        this.delta = delta
     }
 
 }
