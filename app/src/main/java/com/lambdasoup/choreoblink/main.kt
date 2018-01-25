@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.Transformations
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.os.Bundle
@@ -20,6 +19,8 @@ class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
 
     private lateinit var viewModel: MainViewModel
 
+    private lateinit var torchManager: TorchManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -30,11 +31,20 @@ class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
         torchView = findViewById(R.id.torch)
         choreoView = findViewById(R.id.choreo)
 
+        lifecycle.addObserver(application.getService(TorchManager::class.java))
+
         viewModel = ViewModelProviders.of(this)
                 .get(MainViewModel::class.java)
         viewModel.time.observe(this, timeView)
         viewModel.choreo.observe(this, choreoView)
-        viewModel.device.observe(this, torchView)
+        viewModel.torchState.observe(this, torchView)
+
+        choreoView.listener = object : ChoreoView.Listener {
+            override fun onChoreoSelected(choreo: Choreo) {
+                viewModel.selectChoreo(choreo)
+            }
+        }
+
     }
 
     override fun onResume() {
@@ -57,16 +67,19 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val timeSource = app.getService(TimeSource::class.java)
 
     val choreo = choreoRepository.choreos
-    val device = Transformations.map(torchManager.devices, List<Device>::firstOrNull)!!
+    val torchState = torchManager.state
     val time: LiveData<TimeSyncState> = timeSource.state
 
     init {
-        time.observeForever { timeSyncState ->
-            if (timeSyncState is TimeSyncState.Synced) {
-                torchManager.updateTimeDelta(timeSyncState.delta)
-            }
-        }
+//        time.observeForever { timeSyncState ->
+//            if (timeSyncState is TimeSyncState.Synced) {
+//                torchManager.updateTimeDelta(timeSyncState.delta)
+//            }
+//        }
     }
 
+    fun selectChoreo(choreo: Choreo) {
+        torchManager.setChoreo(choreo)
+    }
 }
 

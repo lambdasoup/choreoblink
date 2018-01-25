@@ -28,6 +28,8 @@ class ChoreoView @JvmOverloads constructor(context: Context,
                                            defStyleAttr: Int = 0)
     : CardView(context, attrs, defStyleAttr), Observer<List<Choreo>> {
 
+    var listener: Listener? = null
+
     override fun onChanged(choreos: List<Choreo>?) {
         if (choreos == null) {
             return
@@ -49,6 +51,7 @@ class ChoreoView @JvmOverloads constructor(context: Context,
         override fun onBindViewHolder(holder: ChoreoViewHolder, position: Int) {
             val choreo = choreos[position]
             holder.button.text = choreo.id
+            holder.button.setOnClickListener { listener?.onChoreoSelected(choreo) }
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChoreoViewHolder {
@@ -69,4 +72,7 @@ class ChoreoView @JvmOverloads constructor(context: Context,
 
     }
 
+    interface Listener {
+        fun onChoreoSelected(choreo: Choreo)
+    }
 }

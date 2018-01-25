@@ -1,54 +1,118 @@
 package com.lambdasoup.choreoblink
 
-import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.Observer
+import android.arch.lifecycle.*
 import android.content.Context
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraManager
 import android.support.v7.widget.CardView
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.TextView
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
-class TorchManager(context: Context) {
+class TorchManager(context: Context) : LifecycleObserver {
 
+    private val scheduler: ScheduledThreadPoolExecutor = ScheduledThreadPoolExecutor(1)
     private val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
-    val devices = MutableLiveData<List<Device>>()
+    val state = TorchLiveData()
 
-    private var delta = 0L
+    var torch = false
+    var future: ScheduledFuture<*>? = null
 
     init {
         try {
             val ids = manager.cameraIdList
-            devices.postValue(ids.map { id ->
-                val characteristics = manager.getCameraCharacteristics(id)
-                Device(id, 15, 15)
-            })
+            state.postValue(State(Device(ids[0], 15, 15), null, 0L))
         } catch (e: CameraAccessException) {
             throw RuntimeException(e)
         }
     }
 
+    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+    fun startScheduler() {
+        future = scheduler.scheduleWithFixedDelay(ticker, 0, 1, TimeUnit.MILLISECONDS)
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    fun stopScheduler() {
+        future!!.cancel(true)
+        scheduler.execute(turnOff)
+    }
+
+    private val ticker = Runnable {
+        Log.d("torch", "tick")
+        val state = state.value ?: return@Runnable
+
+        val choreo = state.choreo ?: return@Runnable
+        val delta = state.delta ?: return@Runnable
+        val device = state.device ?: return@Runnable
+
+        val time = System.currentTimeMillis() + state.delta
+
+        val on: Boolean
+        on = time % 2000 > 1000
+
+        if (on && !torch) {
+            manager.setTorchMode(device.id, true)
+            Log.d("torch", "turning on")
+            torch = true
+        }
+
+        if (!on && torch) {
+            manager.setTorchMode(device.id, false)
+            Log.d("torch", "turning off")
+            torch = false
+        }
+    }
+
+    private val turnOff = Runnable {
+        val state = state.value ?: return@Runnable
+        val device = state.device ?: return@Runnable
+        manager.setTorchMode(device.id, false)
+    }
+
     fun updateTimeDelta(delta: Long) {
-        this.delta = delta
+        state.delta.value = delta
+    }
+
+    fun setChoreo(choreo: Choreo) {
+        state.choreo.value = choreo
     }
 
 }
 
+data class State(val device: Device?, val choreo: Choreo?, val delta: Long?)
+
 data class Device(val id: String, val onDelay: Long, val offDelay: Long)
+
+
+class TorchLiveData : MediatorLiveData<State>() {
+
+    val delta = MutableLiveData<Long>()
+    val choreo = MutableLiveData<Choreo>()
+
+    init {
+        addSource(delta) { value = value?.copy(delta = it) }
+        addSource(choreo) { value = value?.copy(choreo = it) }
+    }
+
+}
 
 class CameraView @JvmOverloads constructor(context: Context,
                                            attrs: AttributeSet? = null,
-                                           defStyleAttr: Int = 0)
-    : CardView(context, attrs, defStyleAttr), Observer<Device?> {
+                                           defStyleAttr: Int = 0) :
+    CardView(context, attrs, defStyleAttr), Observer<State?> {
 
-    override fun onChanged(device: Device?) {
-        if (device == null) {
+    override fun onChanged(state: State?) {
+        if (state?.device == null) {
             delay.text = "no camera device available"
         } else {
-            delay.text = "set delay: ON - ${device.onDelay}ms; OFF - ${device.onDelay}ms"
+            delay.text =
+                    "set delay: ON - ${state.device.onDelay}ms; OFF - ${state.device.onDelay}ms"
         }
     }
 

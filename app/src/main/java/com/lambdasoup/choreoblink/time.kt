@@ -1,6 +1,7 @@
 package com.lambdasoup.choreoblink
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.Observer
 import android.content.BroadcastReceiver
@@ -13,9 +14,9 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.support.v4.content.LocalBroadcastManager
-import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.CardView
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.ProgressBar
@@ -84,7 +85,7 @@ class TimeSyncLiveData(private val context: Context) : LiveData<TimeSyncState>()
     }
 
     private val locationManager: LocationManager =
-            context.getSystemService(AppCompatActivity.LOCATION_SERVICE) as LocationManager
+        context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -93,13 +94,23 @@ class TimeSyncLiveData(private val context: Context) : LiveData<TimeSyncState>()
     }
 
     private val listener = object : LocationListener {
-        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+        @SuppressLint("MissingPermission")
+        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+            val satellites = locationManager.getGpsStatus(null).satellites.iterator()
+            var i = 0
+            while (satellites.hasNext()) {
+                i++
+                satellites.next()
+            }
+            Log.d("time", "${i}")
+
+        }
         override fun onProviderEnabled(provider: String?) {}
         override fun onProviderDisabled(provider: String?) {}
         override fun onLocationChanged(location: Location?) {
             if (location != null) {
                 val delta = System.currentTimeMillis() - location.time
-                postValue(TimeSyncState.Synced(delta))
+                value = TimeSyncState.Synced(delta)
                 return
             }
         }
