@@ -12,8 +12,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
 
-
-@Suppress("IllegalIdentifier")
 class MainViewModelTest {
 
     @Rule
@@ -35,7 +33,7 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `should update torch and model with real time`() {
+    fun shouldUpdateTorchAndModelWithTime() {
         val timeSyncState = MutableLiveData<TimeSyncState>()
         whenever(timeSource.state).thenReturn(timeSyncState)
         val vm = MainViewModel(app)
