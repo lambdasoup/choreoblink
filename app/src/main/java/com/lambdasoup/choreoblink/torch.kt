@@ -26,7 +26,7 @@ class TorchManager(context: Context) : LifecycleObserver {
     init {
         try {
             val ids = manager.cameraIdList
-            state.postValue(State(Device(ids[0], 15, 15), null, 0L))
+            state.postValue(TorchState(Device(ids[0], 15, 15), null, 0L))
         } catch (e: CameraAccessException) {
             throw RuntimeException(e)
         }
@@ -44,7 +44,6 @@ class TorchManager(context: Context) : LifecycleObserver {
     }
 
     private val ticker = Runnable {
-        Log.d("torch", "tick")
         val state = state.value ?: return@Runnable
 
         val choreo = state.choreo ?: return@Runnable
@@ -85,12 +84,12 @@ class TorchManager(context: Context) : LifecycleObserver {
 
 }
 
-data class State(val device: Device?, val choreo: Choreo?, val delta: Long?)
+data class TorchState(val device: Device?, val choreo: Choreo?, val delta: Long?)
 
 data class Device(val id: String, val onDelay: Long, val offDelay: Long)
 
 
-class TorchLiveData : MediatorLiveData<State>() {
+class TorchLiveData : MediatorLiveData<TorchState>() {
 
     val delta = MutableLiveData<Long>()
     val choreo = MutableLiveData<Choreo>()
@@ -105,14 +104,14 @@ class TorchLiveData : MediatorLiveData<State>() {
 class CameraView @JvmOverloads constructor(context: Context,
                                            attrs: AttributeSet? = null,
                                            defStyleAttr: Int = 0) :
-    CardView(context, attrs, defStyleAttr), Observer<State?> {
+    CardView(context, attrs, defStyleAttr), Observer<TorchState?> {
 
-    override fun onChanged(state: State?) {
-        if (state?.device == null) {
+    override fun onChanged(torchState: TorchState?) {
+        if (torchState?.device == null) {
             delay.text = "no camera device available"
         } else {
             delay.text =
-                    "set delay: ON - ${state.device.onDelay}ms; OFF - ${state.device.onDelay}ms"
+                    "set delay: ON - ${torchState.device.onDelay}ms; OFF - ${torchState.device.onDelay}ms"
         }
     }
 

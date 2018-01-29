@@ -1,7 +1,6 @@
 package com.lambdasoup.choreoblink
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.Observer
 import android.content.BroadcastReceiver
@@ -16,7 +15,6 @@ import android.os.Bundle
 import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.widget.CardView
 import android.util.AttributeSet
-import android.util.Log
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.ProgressBar
@@ -44,7 +42,7 @@ class TimeSyncView @JvmOverloads constructor(context: Context,
     }
 
     override fun onChanged(nullableState: TimeSyncState?) {
-        val state = requireNotNull(nullableState)
+        val state = nullableState ?: return
 
         return when (state) {
             TimeSyncState.NeedsPermission -> {
@@ -94,17 +92,7 @@ class TimeSyncLiveData(private val context: Context) : LiveData<TimeSyncState>()
     }
 
     private val listener = object : LocationListener {
-        @SuppressLint("MissingPermission")
-        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-            val satellites = locationManager.getGpsStatus(null).satellites.iterator()
-            var i = 0
-            while (satellites.hasNext()) {
-                i++
-                satellites.next()
-            }
-            Log.d("time", "${i}")
-
-        }
+        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
         override fun onProviderEnabled(provider: String?) {}
         override fun onProviderDisabled(provider: String?) {}
         override fun onLocationChanged(location: Location?) {
