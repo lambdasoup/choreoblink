@@ -28,7 +28,7 @@ class TorchManager(context: Context) : LifecycleObserver {
     init {
         try {
             val ids = manager.cameraIdList
-            state.value = TorchState(Device(ids[0], 15, 15, false), null, 0L)
+            state.value = TorchState(Device(ids[0], 20, 20, false), null, 0L)
         } catch (e: CameraAccessException) {
             throw RuntimeException(e)
         }
@@ -52,10 +52,9 @@ class TorchManager(context: Context) : LifecycleObserver {
         val delta = state.delta ?: return@Runnable
         val device = state.device ?: return@Runnable
 
-        val time = System.currentTimeMillis() + state.delta
+        val time = System.currentTimeMillis() + delta
 
-        val on: Boolean
-        on = time % 2000 > 1000
+        val on = choreo.on(time, device.onDelay, device.offDelay)
 
         if (on && !torch) {
             manager.setTorchMode(device.id, true)
