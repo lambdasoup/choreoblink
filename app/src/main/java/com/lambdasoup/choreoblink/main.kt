@@ -27,8 +27,6 @@ class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
         torchView = findViewById(R.id.torch)
         choreoView = findViewById(R.id.choreo)
 
-        lifecycle.addObserver(application.getService(TorchManager::class.java))
-
         viewModel = ViewModelProviders.of(this)
                 .get(MainViewModel::class.java)
 
