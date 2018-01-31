@@ -25,10 +25,10 @@ data class Choreo(val id: String) {
 
     fun on(time: Long, onDelay: Long, offDelay: Long): Boolean {
         val t = time % 3000
-        if (t - onDelay < 1000) {
+        if (t + onDelay < 1000) {
             return false
         }
-        if (t - offDelay > 2000) {
+        if (t + offDelay > 2000) {
             return false
         }
         return true

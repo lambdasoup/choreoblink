@@ -43,6 +43,16 @@ class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
             }
         }
 
+        torchView.listener = object : CameraView.Listener {
+            override fun onOnDelayChanged(value: Long) {
+                viewModel.changeOnDelayTo(value)
+            }
+
+            override fun onOffDelayChanged(value: Long) {
+                viewModel.changeOffDelayTo(value)
+            }
+        }
+
         timeView.listener = this
     }
 
@@ -101,5 +111,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val torchState: TorchState?,
         val timeSyncState: TimeSyncState?
     )
+
+    fun changeOnDelayTo(value: Long) {
+        torchManager.setOnDelay(value)
+    }
+
+    fun changeOffDelayTo(value: Long) {
+        torchManager.setOffDelay(value)
+    }
 }
 

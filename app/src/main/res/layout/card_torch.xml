@@ -24,6 +24,20 @@
             android:layout_height="wrap_content"
             android:text="This app automatically chooses the camera / flashlight to use and sets a on/off delay." />
 
+        <SeekBar
+            android:id="@+id/on_delay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:max="1000" />
+
+        <SeekBar
+            android:id="@+id/off_delay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:max="1000" />
+
         <TextView
             android:id="@+id/delay"
             android:layout_width="wrap_content"
