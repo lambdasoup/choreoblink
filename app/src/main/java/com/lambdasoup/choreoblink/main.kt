@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity(), TimeSyncView.Listener {
             }
         }
 
+        timeView.listener = this
     }
 
     override fun onResume() {

@@ -30,6 +30,11 @@
             android:layout_height="wrap_content"
             tools:text="Set delay: ON - 15ms; OFF - 15ms " />
 
+        <View
+            android:id="@+id/indicator"
+            android:layout_width="24dp"
+            android:layout_height="24dp" />
+
     </LinearLayout>
 
 </merge>

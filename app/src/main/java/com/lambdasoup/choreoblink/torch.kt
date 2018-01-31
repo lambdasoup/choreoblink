@@ -2,12 +2,14 @@ package com.lambdasoup.choreoblink
 
 import android.arch.lifecycle.*
 import android.content.Context
+import android.graphics.Color
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraManager
 import android.support.v7.widget.CardView
 import android.util.AttributeSet
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.TextView
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
@@ -26,7 +28,7 @@ class TorchManager(context: Context) : LifecycleObserver {
     init {
         try {
             val ids = manager.cameraIdList
-            state.postValue(TorchState(Device(ids[0], 15, 15), null, 0L))
+            state.value = TorchState(Device(ids[0], 15, 15, false), null, 0L)
         } catch (e: CameraAccessException) {
             throw RuntimeException(e)
         }
@@ -59,12 +61,14 @@ class TorchManager(context: Context) : LifecycleObserver {
             manager.setTorchMode(device.id, true)
             Log.d("torch", "turning on")
             torch = true
+            this.state.postValue(state.copy(device = device.copy(flash = true)))
         }
 
         if (!on && torch) {
             manager.setTorchMode(device.id, false)
             Log.d("torch", "turning off")
             torch = false
+            this.state.postValue(state.copy(device = device.copy(flash = false)))
         }
     }
 
@@ -86,7 +90,7 @@ class TorchManager(context: Context) : LifecycleObserver {
 
 data class TorchState(val device: Device?, val choreo: Choreo?, val delta: Long?)
 
-data class Device(val id: String, val onDelay: Long, val offDelay: Long)
+data class Device(val id: String, val onDelay: Long, val offDelay: Long, val flash: Boolean)
 
 
 class TorchLiveData : MediatorLiveData<TorchState>() {
@@ -107,19 +111,30 @@ class CameraView @JvmOverloads constructor(context: Context,
     CardView(context, attrs, defStyleAttr), Observer<TorchState?> {
 
     override fun onChanged(torchState: TorchState?) {
-        if (torchState?.device == null) {
+        val state = torchState ?: return
+        val device = state.device ?: return
+
+        if (device == null) {
             delay.text = "no camera device available"
         } else {
             delay.text =
-                    "set delay: ON - ${torchState.device.onDelay}ms; OFF - ${torchState.device.onDelay}ms"
+                    "set delay: ON - ${device.onDelay}ms; OFF - ${device.onDelay}ms"
+        }
+
+        if (device.flash) {
+            indicator.setBackgroundColor(Color.RED)
+        } else {
+            indicator.setBackgroundColor(Color.WHITE)
         }
     }
 
     private val delay: TextView
+    private val indicator: View
 
     init {
         LayoutInflater.from(context).inflate(R.layout.card_torch, this)
         delay = findViewById(R.id.delay)
+        indicator = findViewById(R.id.indicator)
     }
 
 }
