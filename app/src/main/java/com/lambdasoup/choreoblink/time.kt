@@ -1,6 +1,7 @@
 package com.lambdasoup.choreoblink
 
 import android.Manifest
+import android.animation.TimeAnimator
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.Observer
 import android.content.BroadcastReceiver
@@ -25,20 +26,36 @@ private const val PERMISSION: String = Manifest.permission.ACCESS_FINE_LOCATION
 
 class TimeSyncView @JvmOverloads constructor(context: Context,
                                              attrs: AttributeSet? = null,
-                                             defStyleAttr: Int = 0)
-    : CardView(context, attrs, defStyleAttr), Observer<TimeSyncState> {
+                                             defStyleAttr: Int = 0) :
+    CardView(context, attrs, defStyleAttr), Observer<TimeSyncState>, TimeAnimator.TimeListener {
 
     private val button: Button
     private val text: TextView
+    private val real: TextView
     private val progress: ProgressBar
 
+    private val animator = TimeAnimator()
+
     var listener: Listener? = null
+
+    var lastDelta = 0L
 
     init {
         LayoutInflater.from(context).inflate(R.layout.card_time, this)
         button = findViewById(R.id.button)
         progress = findViewById(R.id.progress)
         text = findViewById(R.id.text)
+        real = findViewById(R.id.real)
+
+        animator.setTimeListener(this)
+        animator.start()
+    }
+
+    override fun onTimeUpdate(animation: TimeAnimator, totalTime: Long, deltaTime: Long) {
+        val real = System.currentTimeMillis() + lastDelta
+        val secs = real % 60000 / 1000
+        val msecs = real % 1000
+        this.real.text = "%02d.%03d".format(Locale.ENGLISH, secs, msecs)
     }
 
     override fun onChanged(nullableState: TimeSyncState?) {
@@ -60,6 +77,7 @@ class TimeSyncView @JvmOverloads constructor(context: Context,
                 button.visibility = INVISIBLE
                 text.visibility = VISIBLE
                 text.text = String.format(Locale.ENGLISH, "synced (%dms)", state.delta)
+                lastDelta = state.delta
                 progress.visibility = INVISIBLE
             }
         }

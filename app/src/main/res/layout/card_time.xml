@@ -48,6 +48,15 @@
 
         </FrameLayout>
 
+        <TextView
+            android:id="@+id/real"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:fontFamily="monospace"
+            android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
+            tools:text="53.233" />
+
     </LinearLayout>
 
 </merge>
